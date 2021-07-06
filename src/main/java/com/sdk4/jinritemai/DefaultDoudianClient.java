@@ -3,6 +3,8 @@ package com.sdk4.jinritemai;
 import com.alibaba.fastjson.JSON;
 import com.sdk4.jinritemai.exception.ApiException;
 import com.sdk4.jinritemai.model.bean.DoudianAccessToken;
+import com.sdk4.jinritemai.model.request.DoudianTokenCreateRequest;
+import com.sdk4.jinritemai.model.request.DoudianTokenRefreshRequest;
 import com.sdk4.jinritemai.model.response.DoudianAccessTokenResponse;
 import com.sdk4.jinritemai.util.DoudianUtils;
 import com.sdk4.jinritemai.util.WebUtils;
@@ -40,31 +42,81 @@ public class DefaultDoudianClient implements DoudianClient {
 
     @Override
     public DoudianAccessToken getAccessToken() {
-        String url = String.format("%s/oauth2/access_token?app_id=%s&app_secret=%s&grant_type=authorization_self",
-                serverUrl,
-                appKey,
-                appSecret);
-        return createAccessToken(url);
+//        /token/create?app_key=your_app_key_here&method=token.create&param_json={"code":"","grant_type":"authorization_self","shop_id":"12312312"}&timestamp=2018-06-14%2016:06:59&v=2&sign=your_sign_here
+        DoudianTokenCreateRequest request = new DoudianTokenCreateRequest();
+        request.setGrantType("authorization_self");
+        request.setCode("");
+
+        return createAccessToken(request);
     }
 
+//    @Override
+//    public DoudianAccessToken getAccessToken(String refreshToken) {
+//        String url = String.format("%s/oauth2/refresh_token?app_id=%s&app_secret=%s&grant_type=refresh_token&refresh_token=%s",
+//                serverUrl,
+//                appKey,
+//                appSecret,
+//                refreshToken);
+//        return createAccessToken(url);
+//    }
+//
+//    @Override
+//    public DoudianAccessToken codeToToken(String code) {
+//        String url = String.format("%s/oauth2/access_token?app_id=%s&app_secret=%s&code=%s&grant_type=authorization_code",
+//                serverUrl,
+//                appKey,
+//                appSecret,
+//                code);
+//        return createAccessToken(url);
+//    }
+
+    /**
+     * 通过refreshToken刷新accesstoken
+     * 新版 获取accesstoken 方式
+     *
+     * @param refreshToken
+     * @return
+     */
     @Override
     public DoudianAccessToken getAccessToken(String refreshToken) {
-        String url = String.format("%s/oauth2/refresh_token?app_id=%s&app_secret=%s&grant_type=refresh_token&refresh_token=%s",
-                serverUrl,
-                appKey,
-                appSecret,
-                refreshToken);
-        return createAccessToken(url);
+        DoudianTokenRefreshRequest request = new DoudianTokenRefreshRequest();
+        request.setRefreshToken(refreshToken);
+        return createAccessToken(request);
     }
 
+    /**
+     * 通过授权code获取accesstoken
+     * 新版 获取accesstoken 方式
+     *
+     * @param code
+     * @return
+     */
     @Override
     public DoudianAccessToken codeToToken(String code) {
-        String url = String.format("%s/oauth2/access_token?app_id=%s&app_secret=%s&code=%s&grant_type=authorization_code",
-                serverUrl,
-                appKey,
-                appSecret,
-                code);
-        return createAccessToken(url);
+        DoudianTokenCreateRequest request = new DoudianTokenCreateRequest();
+        request.setCode(code);
+        return createAccessToken(request);
+    }
+
+    DoudianAccessToken createAccessToken(DoudianRequest request) {
+        DoudianAccessToken accessToken;
+        try {
+            DoudianResponse response = executeWithOutToken(request);
+            if (response.isSuccess()) {
+                accessToken = (DoudianAccessToken) response.getData();
+                if (accessToken.getExpiresIn() != null) {
+                    accessToken.setExpire(System.currentTimeMillis() + (accessToken.getExpiresIn() * 1000) - 60000);
+                }
+            } else {
+                accessToken = new DoudianAccessToken();
+                accessToken.setError(DoudianUtils.isEmpty(response.getMessage()) ? response.getErrNo() + "" : response.getMessage());
+            }
+        } catch (ApiException e) {
+            accessToken = new DoudianAccessToken();
+            accessToken.setError("获取accessToken失败");
+            accessToken.setException(e);
+        }
+        return accessToken;
     }
 
     DoudianAccessToken createAccessToken(String url) {
@@ -88,6 +140,32 @@ public class DefaultDoudianClient implements DoudianClient {
         }
         return accessToken;
     }
+
+    @Override
+    public <T extends DoudianResponse> T executeWithOutToken(DoudianRequest<T> request) throws ApiException {
+        String paramJson = DoudianUtils.createParamJson(request);
+
+        Map<String, String> params = new HashMap<>();
+        params.put("method", request.getMethod());
+        params.put("app_key", appKey);
+        params.put("param_json", paramJson);
+        params.put("timestamp", DoudianUtils.getTimeString(new Date()));
+        params.put("v", version);
+
+        try {
+            params.put("sign", DoudianUtils.signTopRequest(params, appSecret, signMethod));
+            params.put("sign_method", signMethod);
+
+            String url = createUrl(serverUrl, request.getMethod());
+            String query = WebUtils.buildQuery(params, "UTF-8");
+            String fullUrl = WebUtils.buildRequestUrl(url, query);
+            HttpResponseData data = WebUtils.doPost(fullUrl, new HashMap<>(0), "UTF-8", connectTimeout, readTimeout);
+            return JSON.parseObject(data.getBody(), request.getResponseClass());
+        } catch (IOException e) {
+            throw new ApiException("API_CALL_ERROR", "接口调用失败", e);
+        }
+    }
+
 
     @Override
     public <T extends DoudianResponse> T execute(DoudianRequest<T> request) throws ApiException {
@@ -127,10 +205,10 @@ public class DefaultDoudianClient implements DoudianClient {
 
             String url = createUrl(serverUrl, request.getMethod());
             String query = WebUtils.buildQuery(params, "UTF-8");
-            String fullUrl = WebUtils.buildRequestUrl(url, new String[]{query});
+            String fullUrl = WebUtils.buildRequestUrl(url, query);
             HttpResponseData data = WebUtils.doPost(fullUrl, new HashMap<>(0), "UTF-8", connectTimeout, readTimeout);
-            System.out.println(fullUrl);
-            System.out.println(data.getBody());
+//            System.out.println(fullUrl);
+//            System.out.println(data.getBody());
             return JSON.parseObject(data.getBody(), request.getResponseClass());
         } catch (IOException e) {
             throw new ApiException("API_CALL_ERROR", "接口调用失败", e);

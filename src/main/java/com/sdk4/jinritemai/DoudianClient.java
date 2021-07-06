@@ -21,6 +21,7 @@ public interface DoudianClient {
 
     /**
      * 刷新授权
+     * 新版方式
      *
      * @param refreshToken
      * @return
@@ -29,7 +30,7 @@ public interface DoudianClient {
 
     /**
      * 使用code换取授权
-     *
+     * 新版方式
      * @param code
      * @return
      */
@@ -55,5 +56,15 @@ public interface DoudianClient {
      * @throws ApiException
      */
     <T extends DoudianResponse> T execute(DoudianRequest<T> request, String accessToken) throws ApiException;
+
+    /**
+     * 抖店 Client
+     *
+     * @param request
+     * @param <T>
+     * @return
+     * @throws ApiException
+     */
+    <T extends DoudianResponse> T executeWithOutToken(DoudianRequest<T> request) throws ApiException;
 
 }

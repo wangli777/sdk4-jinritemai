@@ -41,8 +41,10 @@ public class DoudianUtils {
         for (String key : keys) {
             Object valueObj = map.get(key);
             String value = valueObj == null ? null : valueObj.toString();
-            if (isEmpty(key) || isEmpty(value)) {
-                continue;
+            if (!"code".equals(key)) {
+                if (isEmpty(key) || isEmpty(value)) {
+                    continue;
+                }
             }
             result.put(key, value);
 

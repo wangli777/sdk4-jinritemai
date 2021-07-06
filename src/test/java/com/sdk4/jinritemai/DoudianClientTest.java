@@ -64,6 +64,7 @@ public class DoudianClientTest {
             long expire = System.currentTimeMillis() + (expiresIn - 60) * 1000;
             // 存储
         }
+        client.setAccessToken(accessToken);
 
         return client;
     }
@@ -71,10 +72,10 @@ public class DoudianClientTest {
     public DoudianClient getClientFromShop(Long shopId) {
         // 根据店铺id获取店铺授权信息
         DoudianAccessToken accessToken = new DoudianAccessToken();
-        accessToken.setAccessToken("");
-        accessToken.setExpiresIn(0);
-        accessToken.setExpire(0L);
-        accessToken.setRefreshToken("");
+        accessToken.setAccessToken("fdda79c1-c7b7-4eee-b354-61c90b4efaa6");
+        accessToken.setExpiresIn(604800);
+        accessToken.setExpire(System.currentTimeMillis() + (accessToken.getExpiresIn() * 1000) - 60000);
+        accessToken.setRefreshToken("e90d592f-87bc-47eb-8530-8f6435fad04f");
 
         client.setAccessToken(accessToken);
         if (!accessToken.isValid()) {
@@ -98,6 +99,18 @@ public class DoudianClientTest {
         client.setAccessToken(accessToken);
 
         return client;
+    }
+
+    @Test
+    public void testGetAccessTokenByCode() {
+        DoudianClient client = getClient("3dd0cd4e-fe6a-4c78-bcd1-926c36a959e3");
+        System.out.println(client);
+    }
+
+    @Test
+    public void testGetAccessTokenByRefresh() {
+        DoudianAccessToken accessToken = client.getAccessToken("5dda420a-ba65-4134-897f-11ed20367dda");
+        System.out.println(accessToken.toString());
     }
 
     @Test
