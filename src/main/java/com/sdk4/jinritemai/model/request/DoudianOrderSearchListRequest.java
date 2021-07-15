@@ -84,6 +84,10 @@ public class DoudianOrderSearchListRequest implements DoudianRequest<DoudianOrde
      */
     private Boolean orderAsc;
 
+    /**
+     * 密文是否可搜索
+     */
+    private Boolean isSearchable;
 
     @Override
     public Class<DoudianOrderSearchListResponse> getResponseClass() {

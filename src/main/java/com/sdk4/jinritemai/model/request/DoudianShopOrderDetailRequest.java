@@ -15,6 +15,11 @@ public class DoudianShopOrderDetailRequest implements DoudianRequest<DoudianShop
      */
     private String shopOrderId;
 
+    /**
+     * 密文是否可搜索
+     */
+    private Boolean isSearchable;
+
     @Override
     public Class<DoudianShopOrderDetailResponse> getResponseClass() {
         return DoudianShopOrderDetailResponse.class;

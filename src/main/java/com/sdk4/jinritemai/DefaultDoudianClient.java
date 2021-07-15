@@ -9,12 +9,14 @@ import com.sdk4.jinritemai.model.response.DoudianAccessTokenResponse;
 import com.sdk4.jinritemai.util.DoudianUtils;
 import com.sdk4.jinritemai.util.WebUtils;
 import com.sdk4.jinritemai.util.WebUtils.HttpResponseData;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 public class DefaultDoudianClient implements DoudianClient {
     protected String serverUrl;
     protected String appKey;
@@ -24,6 +26,8 @@ public class DefaultDoudianClient implements DoudianClient {
     protected int readTimeout;
     private String version;
     DoudianAccessToken accessToken;
+
+    public static final String LOG_NAME = "===DefaultDoudianClient=== ";
 
     public DefaultDoudianClient(String serverUrl, String appKey, String appSecret) {
         this.signMethod = "hmac-sha256";
@@ -207,8 +211,9 @@ public class DefaultDoudianClient implements DoudianClient {
             String query = WebUtils.buildQuery(params, "UTF-8");
             String fullUrl = WebUtils.buildRequestUrl(url, query);
             HttpResponseData data = WebUtils.doPost(fullUrl, new HashMap<>(0), "UTF-8", connectTimeout, readTimeout);
-//            System.out.println(fullUrl);
-//            System.out.println(data.getBody());
+//            log.warn("{} execute fullUrl:{}", LOG_NAME, fullUrl);
+            System.out.println(fullUrl);
+            log.warn("{} execute data:{}", LOG_NAME, data.getBody());
             return JSON.parseObject(data.getBody(), request.getResponseClass());
         } catch (IOException e) {
             throw new ApiException("API_CALL_ERROR", "接口调用失败", e);
